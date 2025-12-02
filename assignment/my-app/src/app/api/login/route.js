@@ -1,88 +1,63 @@
-export async function GET(req, res) {
+import { NextResponse } from "next/server";
+import { MongoClient } from "mongodb";
+import bcrypt from "bcryptjs";
 
+const uri = "mongodb+srv://root:myPassword123@cluster0.kcvhuf2.mongodb.net/?retryWrites=true&w=majority";
 
-  // Make a note we are on
+export async function POST(req) {
+  console.log("In the /api/login route");
 
-  // the api. This goes to the console.
+  try {
+    const { email, pass } = await req.json();
+    const loginName = email; 
 
-  console.log("in the api page")
+    console.log("Login attempt:", loginName);
 
+    const client = new MongoClient(uri);
+    await client.connect();
 
+    const db = client.db("app");
+    const collection = db.collection("login");
 
-  // get the values
+    const user =
+      (await collection.findOne({ email: loginName })) ||
+      (await collection.findOne({ username: loginName }));
 
-  // that were sent across to us.
+    console.log("User from DB:", user);
 
-  const { searchParams } = new URL(req.url)
+    if (!user) {
+      console.log("User not found");
+      return NextResponse.json({ success: false });
+    }
 
-  const email = searchParams.get('email')
+    console.log("Found user role:", user.acc_type);
+    console.log("Typed pass:", pass);
+    console.log("Stored pass:", user.pass);
 
-  const pass = searchParams.get('pass')
+    let validPass = false;
 
+    if (typeof user.pass === "string" && user.pass.startsWith("$2")) {
+      validPass = await bcrypt.compare(pass, user.pass);
+      console.log("bcrypt.compare result:", validPass);
+    } else {
+      
+      validPass = pass === user.pass;
+      console.log("Plaintext compare result:", validPass);
+    }
 
-  console.log(email);
+    if (!validPass) {
+      console.log("Password incorrect");
+      return NextResponse.json({ success: false });
+    }
 
-  console.log(pass);
-
-
-
- // =================================================
-
-  const { MongoClient } = require('mongodb');
-
-
-  const url = 'mongodb://root:example@localhost:27017/';
-
-  const client = new MongoClient(url);
-
- 
-
- 
-
-  const dbName = 'app'; // database name
-
-
-  await client.connect();
-
-  console.log('Connected successfully to server');
-
-  const db = client.db(dbName);
-
-  const collection = db.collection('login'); // collection name
-
-
-
-  const findResult = await collection.find({"username": "sample@test.com"}).toArray();
-
-  console.log('Found documents =>', findResult);
-
-
-  let valid = false
-
-  if(findResult.length >0 ){
-
-          valid = true;
-
-          console.log("login valid")
-
-  } else {
-
-
-        valid = false;
-
-        console.log("login invalid")
-
+    console.log("Login valid!");
+    return NextResponse.json({
+      success: true,
+      role: user.acc_type,
+      email: user.email || user.username,
+    });
+  } catch (err) {
+    console.error("LOGIN API ERROR:", err);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
-
-
-
- //==========================================================
-
-
-
-
-  // at the end of the process we need to send something back.
-
-  return Response.json({ "data":"" + valid + ""})
-
 }

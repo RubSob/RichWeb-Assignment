@@ -1,76 +1,108 @@
-'use client';
+"use client";
 
-import React from "react";
-import { Button, TextField, Container, Box } from "@mui/material";
+import { useState } from "react";
+import {
+  Container,
+  Box,
+  TextField,
+  Button,
+  Typography,
+  MenuItem,
+} from "@mui/material";
 
-export default function Register() {
+export default function NewRegisterPage() {
+  const [form, setForm] = useState({
+    email: "",
+    username: "",
+    pass: "",
+    acc_type: "customer",
+  });
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    const name = data.get("name");
-    const email = data.get("email");
-    const pass = data.get("pass");
-    const tel = data.get("tel");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setOk("");
 
-    const res = await fetch("/api/register", {
+    const res = await fetch("/api/newregister", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, pass, tel }),
+      body: JSON.stringify(form),
     });
 
-    const result = await res.json();
-    console.log(result);
+    const data = await res.json();
 
-    if (result.status === "success") {
-      alert("Account created successfully!");
+    if (!res.ok || !data.success) {
+      setError(data.message || "Error registering user");
     } else {
-      alert("Registration failed: " + result.message);
+      setOk("User registered! You can now log in.");
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
-        
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="name"
-          label="Full Name"
-        />
-
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="email"
-          label="Email Address"
-        />
-
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="pass"
-          label="Password"
-          type="password"
-        />
-
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="tel"
-          label="Telephone Number"
-        />
-
-        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+        <Typography variant="h5" mb={2}>
           Register
-        </Button>
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Username (optional)"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Password"
+            name="pass"
+            type="password"
+            value={form.pass}
+            onChange={handleChange}
+          />
+          <TextField
+            select
+            fullWidth
+            margin="normal"
+            label="Account Type"
+            name="acc_type"
+            value={form.acc_type}
+            onChange={handleChange}
+          >
+            <MenuItem value="customer">Customer</MenuItem>
+            <MenuItem value="manager">Manager</MenuItem>
+          </TextField>
 
+          {error && <Typography color="error">{error}</Typography>}
+          {ok && <Typography color="primary">{ok}</Typography>}
+
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>
+            Create Account
+          </Button>
+        </form>
       </Box>
     </Container>
   );

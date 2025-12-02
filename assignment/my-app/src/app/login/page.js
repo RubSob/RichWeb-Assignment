@@ -1,170 +1,86 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
-import Avatar from '@mui/material/Avatar';
+export default function LoginPage() {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-import Button from '@mui/material/Button';
+    const data = new FormData(event.currentTarget);
+    const email = data.get("email");
+    const pass = data.get("pass");
 
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, pass }),
+    });
 
-import TextField from '@mui/material/TextField';
+    const result = await res.json();
+    console.log("Login API Response:", result);
 
-import FormControlLabel from '@mui/material/FormControlLabel';
+    if (result.success) {
+      sessionStorage.setItem("email", result.email);
+      sessionStorage.setItem("role", result.role);
 
-import Checkbox from '@mui/material/Checkbox';
-
-import Link from '@mui/material/Link';
-
-import Container from '@mui/material/Container';
-
-import Box from '@mui/material/Box';
-
-
-
-export default function Home() {
-
-
-  const handleSubmit = (event) => {
-
-                
-
-  console.log("handling submit");
-
-  event.preventDefault();
-
-  const data = new FormData(event.currentTarget);
-
-
-
-   let email = data.get('email')
-
-   let pass = data.get('pass')
-
-
-   console.log("Sent email:" + email)
-
-   console.log("Sent pass:" + pass)
-
-
-
-   runDBCallAsync(`http://localhost:3000/api/login?email=${email}&pass=${pass}`)
-
-
-
-
-
- }; // end handle submit
-
-
-async function runDBCallAsync(url) {
-
-
-
-    const res = await fetch(url);
-
-    const data = await res.json();
-
-
- 
-
-    if(data.data== "valid"){
-
-      console.log("login is valid!")
-
-
-     
-
+      if (result.role === "manager") {
+        window.location.href = "/manager";
+      } else {
+        window.location.href = "/customer";
+      }
     } else {
-
-
-      console.log("not valid  ")
-
+      alert("Invalid email or password.");
     }
-
-  }
-
-
-
+  };
 
   return (
-
     <Container maxWidth="sm">
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+        <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+          LOG IN
+        </Typography>
 
-    <Box sx={{ height: '100vh' }} >
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <TextField fullWidth label="Email" name="email" required />
+          <TextField
+            fullWidth
+            label="Password"
+            name="pass"
+            type="password"
+            required
+            sx={{ mt: 2 }}
+          />
 
+          <FormControlLabel control={<Checkbox color="primary" />} label="Remember me" />
 
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+            Sign In
+          </Button>
 
-    <TextField
-
-      margin="normal"
-
-      required
-
-      fullWidth
-
-      id="email"
-
-      label="Email Address"
-
-      name="email"
-
-      autoComplete="email"
-
-      autoFocus
-
-    />
-
-    <TextField
-
-      margin="normal"
-
-      required
-
-      fullWidth
-
-      name="pass"
-
-      label="Pass"
-
-      type="pass"
-
-      id="pass"
-
-      autoComplete="current-password"
-
-    />
-
-    <FormControlLabel
-
-      control={<Checkbox value="remember" color="primary" />}
-
-      label="Remember me"
-
-    />
-
-    <Button
-
-      type="submit"
-
-      fullWidth
-
-      variant="contained"
-
-      sx={{ mt: 3, mb: 2 }}
-
-    >
-
-      Sign In
-
-    </Button>
-
-</Box>
-
-</Box>
-
-       </Container>
-
-  ); // end return
-
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={() => (window.location.href = "/newregister")}
+          >
+            Register
+          </Button>
+        </Box>
+      </Box>
+    </Container>
+  );
 }
