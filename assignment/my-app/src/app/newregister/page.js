@@ -2,107 +2,67 @@
 
 import { useState } from "react";
 import {
-  Container,
-  Box,
   TextField,
   Button,
-  Typography,
-  MenuItem,
+  Container,
+  Box,
+  Typography
 } from "@mui/material";
 
-export default function NewRegisterPage() {
-  const [form, setForm] = useState({
-    email: "",
-    username: "",
-    pass: "",
-    acc_type: "customer",
-  });
-  const [error, setError] = useState("");
-  const [ok, setOk] = useState("");
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+export default function RegisterPage() {
+  const [msg, setMsg] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setOk("");
 
-    const res = await fetch("/api/newregister", {
+    const data = new FormData(e.currentTarget);
+
+    const body = {
+      firstname: data.get("firstname"),
+      lastname: data.get("lastname"),
+      email: data.get("email"),
+      password: data.get("password")
+    };
+
+    const res = await fetch("/api/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(body)
     });
 
-    const data = await res.json();
+    const result = await res.json();
+    setMsg(result.message);
 
-    if (!res.ok || !data.success) {
-      setError(data.message || "Error registering user");
-    } else {
-      setOk("User registered! You can now log in.");
+    if (result.success) {
+      window.location.href = "/login";
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Box
-        sx={{
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <Typography variant="h5" mb={2}>
-          Register
-        </Typography>
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Username (optional)"
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Password"
-            name="pass"
-            type="password"
-            value={form.pass}
-            onChange={handleChange}
-          />
-          <TextField
-            select
-            fullWidth
-            margin="normal"
-            label="Account Type"
-            name="acc_type"
-            value={form.acc_type}
-            onChange={handleChange}
-          >
-            <MenuItem value="customer">Customer</MenuItem>
-            <MenuItem value="manager">Manager</MenuItem>
-          </TextField>
+      <Box sx={{ mt: 6 }}>
+        <Typography variant="h4">Register</Typography>
 
-          {error && <Typography color="error">{error}</Typography>}
-          {ok && <Typography color="primary">{ok}</Typography>}
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <TextField fullWidth name="firstname" label="First Name" required sx={{ mb: 2 }} />
+          <TextField fullWidth name="lastname" label="Last Name" required sx={{ mb: 2 }} />
+          <TextField fullWidth name="email" label="Email" required sx={{ mb: 2 }} />
+          <TextField fullWidth name="password" type="password" label="Password" required sx={{ mb: 2 }} />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>
+          <Button type="submit" variant="contained" fullWidth>
             Create Account
           </Button>
-        </form>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ mt: 1 }}
+            onClick={() => (window.location.href = "/login")}
+          >
+            Login
+          </Button>
+
+          <Typography sx={{ mt: 2 }}>{msg}</Typography>
+        </Box>
       </Box>
     </Container>
   );

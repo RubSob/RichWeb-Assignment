@@ -3,8 +3,6 @@
 import * as React from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -15,12 +13,12 @@ export default function LoginPage() {
 
     const data = new FormData(event.currentTarget);
     const email = data.get("email");
-    const pass = data.get("pass");
+    const password = data.get("pass"); // input is named "pass"
 
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, pass }),
+      body: JSON.stringify({ email, password }), // MUST MATCH API
     });
 
     const result = await res.json();
@@ -28,9 +26,9 @@ export default function LoginPage() {
 
     if (result.success) {
       sessionStorage.setItem("email", result.email);
-      sessionStorage.setItem("role", result.role);
+      sessionStorage.setItem("role", result.account_type);
 
-      if (result.role === "manager") {
+      if (result.account_type === "manager") {
         window.location.href = "/manager";
       } else {
         window.location.href = "/customer";
@@ -64,8 +62,6 @@ export default function LoginPage() {
             required
             sx={{ mt: 2 }}
           />
-
-          <FormControlLabel control={<Checkbox color="primary" />} label="Remember me" />
 
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
             Sign In
