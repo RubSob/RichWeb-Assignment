@@ -4,22 +4,27 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Button,
   Card,
   CardContent,
+  Button,
   Grid,
 } from "@mui/material";
 import Navbar from "@/components/navbar";
 
-export default function ViewCart() {
+export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  //
-  // Load cart items from MongoDB
-  //
+  // Load product list (needed for prices)
+  const loadProducts = async () => {
+    const res = await fetch("/api/products");
+    const list = await res.json();
+    setProducts(list);
+  };
+
+  // Load cart items from DB
   const loadCart = async () => {
     const email = sessionStorage.getItem("email");
-    if (!email) return;
 
     const res = await fetch("/api/getCart", {
       method: "POST",
@@ -28,58 +33,37 @@ export default function ViewCart() {
     });
 
     const data = await res.json();
-    if (data.success) {
-      setCartItems(data.items);
-    }
+    if (data.success) setCartItems(data.items);
   };
 
-  //
-  // Remove item from cart DB
-  //
-  const removeItem = async (id) => {
-    const res = await fetch("/api/removeFromCart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-
-    const result = await res.json();
-    if (result.success) {
-      loadCart(); // reload from DB
-    }
-  };
-
-  //
-  // Calculate total (we need prices from product names)
-  //
+  // Calculate total price
   const calculateTotal = () => {
     let total = 0;
-
     cartItems.forEach((item) => {
-      // Your products have: title, description, imageUrl, price
-      // Cart stores only pname, so we need your product list
-
-      const product = products.find((p) => p.title === item.pname);
-      if (product) total += product.price;
+      const p = products.find((prod) => prod.title === item.pname);
+      if (p) total += p.price;
     });
-
     return total.toFixed(2);
   };
 
-  //
-  // Fetch product list so we know prices + images
-  //
-  const [products, setProducts] = useState([]);
+  // Confirm order
+  const confirmOrder = async () => {
+    const email = sessionStorage.getItem("email");
 
-  const loadProducts = async () => {
-    const res = await fetch("/api/products");
-    const list = await res.json();
-    setProducts(list);
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert("Order placed successfully!");
+      window.location.href = "/customer";
+    }
   };
 
-  //
-  // Initial load
-  //
   useEffect(() => {
     loadProducts();
     loadCart();
@@ -91,13 +75,12 @@ export default function ViewCart() {
 
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ mb: 3 }}>
-          Your Cart
+          Checkout
         </Typography>
 
         <Grid container spacing={3}>
           {cartItems.map((item) => {
             const product = products.find((p) => p.title === item.pname);
-
             if (!product) return null;
 
             return (
@@ -113,29 +96,17 @@ export default function ViewCart() {
                       marginRight: 20,
                     }}
                   />
-
-                  <CardContent sx={{ flexGrow: 1 }}>
+                  <CardContent>
                     <Typography variant="h6">{product.title}</Typography>
-                    <Typography>{product.description}</Typography>
-                    <Typography sx={{ fontWeight: "bold", mt: 1 }}>
-                      €{product.price}
-                    </Typography>
+                    <Typography>€{product.price}</Typography>
                   </CardContent>
-
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={() => removeItem(item._id)}
-                  >
-                    REMOVE
-                  </Button>
                 </Card>
               </Grid>
             );
           })}
         </Grid>
 
-        {/* Total Price + Checkout Button */}
+        {/* Total + Confirm button */}
         <Box
           sx={{
             display: "flex",
@@ -144,16 +115,14 @@ export default function ViewCart() {
             alignItems: "center",
           }}
         >
-          <Typography variant="h5">
-            Total: €{calculateTotal()}
-          </Typography>
+          <Typography variant="h5">Total: €{calculateTotal()}</Typography>
 
           <Button
             variant="contained"
             size="large"
-            onClick={() => (window.location.href = "/checkout")}
+            onClick={confirmOrder}
           >
-            PROCEED TO CHECKOUT
+            CONFIRM ORDER
           </Button>
         </Box>
       </Box>

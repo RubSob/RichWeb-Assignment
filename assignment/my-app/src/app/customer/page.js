@@ -26,12 +26,21 @@ export default function CustomerPage() {
       .then((data) => setWeather(data));
   }, []);
 
-  const addToCart = (item) => {
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    cart.push(item);
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("storage"));
+  const addToCart = async (item) => {
+  const email = sessionStorage.getItem("email");
+
+  const res = await fetch("/api/inCart", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, pname: item.title })
+  });
+
+    const result = await res.json();
+    if (result.success) {
+      alert("Added to cart!");
+    }
   };
+
 
   return (
     <>
