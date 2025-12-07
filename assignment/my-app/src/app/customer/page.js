@@ -16,39 +16,62 @@ export default function CustomerPage() {
   const [products, setProducts] = useState([]);
   const [weather, setWeather] = useState(null);
 
+  // Session guard
   useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then((data) => setProducts(data));
+    const role = sessionStorage.getItem("role");
 
-    fetch("/api/weather")
-      .then((res) => res.json())
-      .then((data) => setWeather(data));
+    if (!role) {
+      window.location.href = "/login";
+    } else if (role !== "customer") {
+      window.location.href = "/manager";
+    }
   }, []);
 
+  // Load products + weather
+  useEffect(() => {
+    const loadProducts = async () => {
+  const res = await fetch("/api/products");
+  const data = await res.json();
+
+  if (data.success) {
+    setProducts(data.products);   
+  } else {
+    setProducts([]);              
+  }
+};
+
+
+    const loadWeather = async () => {
+      const res = await fetch("/api/weather");
+      const data = await res.json();
+      setWeather(data); // API returns { temp, desc }
+    };
+
+    loadProducts();
+    loadWeather();
+  }, []);
+
+  // Add item to cart
   const addToCart = async (item) => {
-  const email = sessionStorage.getItem("email");
+    const email = sessionStorage.getItem("email");
 
-  const res = await fetch("/api/inCart", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, pname: item.title })
-  });
+    await fetch("/api/inCart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, pname: item.title }),
+    });
 
-    const result = await res.json();
-    if (result.success) {
-      alert("Added to cart!");
-    }
+    // Tell Navbar to update count
+    window.dispatchEvent(new Event("cartUpdated"));
   };
-
 
   return (
     <>
-      <Navbar/>
+      <Navbar />
 
       <Box sx={{ mt: 3, px: 2 }}>
         {weather && (
-          <Typography variant="h5" sx={{ mb: 2 }}>
+          <Typography variant="h5" sx={{ mb: 3 }}>
             Weather Today: {weather.temp}°C — {weather.desc}
           </Typography>
         )}

@@ -15,15 +15,26 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Load product list (needed for prices)
+  //session
+  useEffect(() => {
+    const role = sessionStorage.getItem("role");
+    if (!role) {
+      window.location.href = "/login";
+    }
+  }, []);
+
+  //product list
   const loadProducts = async () => {
     const res = await fetch("/api/products");
-    const list = await res.json();
-    setProducts(list);
+    const data = await res.json();
+
+    if (data.success) {
+      setProducts(data.products);
+    }
   };
 
-  // Load cart items from DB
-  const loadCart = async () => {
+  //cart items
+  const loadCartItems = async () => {
     const email = sessionStorage.getItem("email");
 
     const res = await fetch("/api/getCart", {
@@ -33,20 +44,26 @@ export default function CheckoutPage() {
     });
 
     const data = await res.json();
-    if (data.success) setCartItems(data.items);
+    if (data.success) {
+      setCartItems(data.items);
+    }
   };
 
-  // Calculate total price
+  //calculate total
   const calculateTotal = () => {
     let total = 0;
+
     cartItems.forEach((item) => {
-      const p = products.find((prod) => prod.title === item.pname);
-      if (p) total += p.price;
+      const product = products.find((p) => p.title === item.pname);
+      if (product) {
+        total += product.price;
+      }
     });
+
     return total.toFixed(2);
   };
 
-  // Confirm order
+  //confirm order
   const confirmOrder = async () => {
     const email = sessionStorage.getItem("email");
 
@@ -56,9 +73,9 @@ export default function CheckoutPage() {
       body: JSON.stringify({ email }),
     });
 
-    const result = await res.json();
+    const data = await res.json();
 
-    if (result.success) {
+    if (data.success) {
       alert("Order placed successfully!");
       window.location.href = "/customer";
     }
@@ -66,7 +83,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     loadProducts();
-    loadCart();
+    loadCartItems();
   }, []);
 
   return (
@@ -74,11 +91,20 @@ export default function CheckoutPage() {
       <Navbar />
 
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" sx={{ mb: 3 }}>
+        <Typography variant="h4" sx={{ mb: 2 }}>
           Checkout
         </Typography>
 
-        <Grid container spacing={3}>
+        <Button
+          variant="outlined"
+          sx={{ mb: 3 }}
+          onClick={() => (window.location.href = "/customer")}
+        >
+          Continue Shopping
+        </Button>
+
+        {/* Cart Items */}
+        <Grid container spacing={3}>   
           {cartItems.map((item) => {
             const product = products.find((p) => p.title === item.pname);
             if (!product) return null;
@@ -96,6 +122,7 @@ export default function CheckoutPage() {
                       marginRight: 20,
                     }}
                   />
+
                   <CardContent>
                     <Typography variant="h6">{product.title}</Typography>
                     <Typography>€{product.price}</Typography>
@@ -106,22 +133,17 @@ export default function CheckoutPage() {
           })}
         </Grid>
 
-        {/* Total + Confirm button */}
-        <Box
+        <Box  
           sx={{
+            mt: 4,
             display: "flex",
             justifyContent: "space-between",
-            mt: 4,
             alignItems: "center",
           }}
         >
           <Typography variant="h5">Total: €{calculateTotal()}</Typography>
 
-          <Button
-            variant="contained"
-            size="large"
-            onClick={confirmOrder}
-          >
+          <Button variant="contained" size="large" onClick={confirmOrder}>
             CONFIRM ORDER
           </Button>
         </Box>

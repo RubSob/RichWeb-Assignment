@@ -39,26 +39,15 @@ import { useState, useEffect } from 'react'
 export default function Page() {
 
 
+  useEffect(() => {
+    const role = sessionStorage.getItem("role");
+    if (!role) window.location.href = "/login";
+  }, []);
 
   const [data, setData] = useState(null)
 
 
  
-
-  useEffect(() => {
-
-        fetch('http://localhost:3000/api/getProducts')
-
-          .then((res) => res.json())
-
-          .then((data) => {
-
-            setData(data)
-
-          })
-
-  }, [])
-
  
 
 

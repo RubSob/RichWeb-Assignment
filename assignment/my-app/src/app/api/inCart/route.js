@@ -7,21 +7,36 @@ export async function POST(req) {
   try {
     const { email, pname } = await req.json();
 
+    //validate
+    if (!email || !pname) {
+      return NextResponse.json(
+        { success: false, message: "Email and product name required" }
+      );
+    }
+
+    //database connection
     const client = new MongoClient(uri);
     await client.connect();
     const db = client.db("app");
+
+    //inserting
     const cart = db.collection("shopping_cart");
 
     await cart.insertOne({
       email,
       pname,
-      date: new Date()
+      date: new Date(),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "Item added to cart",
+    });
 
-  } catch (err) {
-    console.log("PUT IN CART ERROR:", err);
-    return NextResponse.json({ success: false });
+  } catch (error) {
+    console.error("ADD TO CART ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Server error" }
+    );
   }
 }

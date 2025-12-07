@@ -2,45 +2,64 @@ import { NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 
-const uri =
-  "mongodb+srv://root:myPassword123@cluster0.kcvhuf2.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://root:myPassword123@cluster0.kcvhuf2.mongodb.net/?retryWrites=true&w=majority";
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json(); // must match frontend
+    const { email, password } = await req.json();
 
     const client = new MongoClient(uri);
     await client.connect();
     const db = client.db("app");
 
     const users = db.collection("users");
+    const managers = db.collection("manager");
 
-    const user = await users.findOne({ email });
+    //check Customer collection
+    let user = await users.findOne({ email });
 
-    if (!user) {
+    if (user) {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return NextResponse.json({
+          success: false,
+          message: "Incorrect password",
+        });
+      }
+
       return NextResponse.json({
-        success: false,
-        message: "Email not found",
+        success: true,
+        email: user.email,
+        role: "customer",
       });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    //if not found check Manager collection
+    let manager = await managers.findOne({ email });
 
-    if (!match) {
+    if (manager) {
+      const match = await bcrypt.compare(password, manager.password);
+      if (!match) {
+        return NextResponse.json({
+          success: false,
+          message: "Incorrect password",
+        });
+      }
+
       return NextResponse.json({
-        success: false,
-        message: "Incorrect password",
+        success: true,
+        email: manager.email,
+        role: "manager",
       });
     }
 
+    //no user found
     return NextResponse.json({
-      success: true,
-      email: user.email,
-      account_type: user.account_type,
+      success: false,
+      message: "Email not found",
     });
   } catch (err) {
     console.log("LOGIN API ERROR:", err);
-
     return NextResponse.json({
       success: false,
       message: "Server error",

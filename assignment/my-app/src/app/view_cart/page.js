@@ -13,10 +13,16 @@ import Navbar from "@/components/navbar";
 
 export default function ViewCart() {
   const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  //
-  // Load cart items from MongoDB
-  //
+  useEffect(() => {
+    const role = sessionStorage.getItem("role");
+    if (!role) {
+      window.location.href = "/login";
+    }
+  }, []);
+
+  //loding items
   const loadCart = async () => {
     const email = sessionStorage.getItem("email");
     if (!email) return;
@@ -33,9 +39,7 @@ export default function ViewCart() {
     }
   };
 
-  //
-  // Remove item from cart DB
-  //
+  //removing
   const removeItem = async (id) => {
     const res = await fetch("/api/removeFromCart", {
       method: "POST",
@@ -43,22 +47,26 @@ export default function ViewCart() {
       body: JSON.stringify({ id }),
     });
 
-    const result = await res.json();
-    if (result.success) {
-      loadCart(); // reload from DB
+    const data = await res.json();
+    if (data.success) {
+      loadCart(); 
     }
   };
 
-  //
-  // Calculate total (we need prices from product names)
-  //
+  const loadProducts = async () => {
+    const res = await fetch("/api/products");
+    const data = await res.json();
+
+    if (data.success) {
+      setProducts(data.products);
+    }
+  };
+
+  //total price 
   const calculateTotal = () => {
     let total = 0;
 
     cartItems.forEach((item) => {
-      // Your products have: title, description, imageUrl, price
-      // Cart stores only pname, so we need your product list
-
       const product = products.find((p) => p.title === item.pname);
       if (product) total += product.price;
     });
@@ -66,20 +74,6 @@ export default function ViewCart() {
     return total.toFixed(2);
   };
 
-  //
-  // Fetch product list so we know prices + images
-  //
-  const [products, setProducts] = useState([]);
-
-  const loadProducts = async () => {
-    const res = await fetch("/api/products");
-    const list = await res.json();
-    setProducts(list);
-  };
-
-  //
-  // Initial load
-  //
   useEffect(() => {
     loadProducts();
     loadCart();
@@ -94,10 +88,18 @@ export default function ViewCart() {
           Your Cart
         </Typography>
 
+        <Button
+          variant="outlined"
+          sx={{ mb: 3 }}
+          onClick={() => (window.location.href = "/customer")}
+        >
+          Continue Shopping
+        </Button>
+
+        {/*cart items */}
         <Grid container spacing={3}>
           {cartItems.map((item) => {
             const product = products.find((p) => p.title === item.pname);
-
             if (!product) return null;
 
             return (
@@ -116,7 +118,6 @@ export default function ViewCart() {
 
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6">{product.title}</Typography>
-                    <Typography>{product.description}</Typography>
                     <Typography sx={{ fontWeight: "bold", mt: 1 }}>
                       €{product.price}
                     </Typography>
@@ -135,7 +136,7 @@ export default function ViewCart() {
           })}
         </Grid>
 
-        {/* Total Price + Checkout Button */}
+        {/* Total Price */}
         <Box
           sx={{
             display: "flex",
@@ -144,9 +145,7 @@ export default function ViewCart() {
             alignItems: "center",
           }}
         >
-          <Typography variant="h5">
-            Total: €{calculateTotal()}
-          </Typography>
+          <Typography variant="h5">Total: €{calculateTotal()}</Typography>
 
           <Button
             variant="contained"

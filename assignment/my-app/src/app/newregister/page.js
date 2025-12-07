@@ -6,33 +6,34 @@ import {
   Button,
   Container,
   Box,
-  Typography
+  Typography,
 } from "@mui/material";
 
 export default function RegisterPage() {
   const [msg, setMsg] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    const data = new FormData(e.currentTarget);
+    const form = new FormData(event.currentTarget);
 
-    const body = {
-      firstname: data.get("firstname"),
-      lastname: data.get("lastname"),
-      email: data.get("email"),
-      password: data.get("password")
+    const userData = {
+      firstname: form.get("firstname"),
+      lastname: form.get("lastname"),
+      email: form.get("email"),
+      password: form.get("password"),
     };
 
     const res = await fetch("/api/register", {
       method: "POST",
-      body: JSON.stringify(body)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
     });
 
-    const result = await res.json();
-    setMsg(result.message);
+    const data = await res.json();
+    setMsg(data.message);
 
-    if (result.success) {
+    if (data.success) {
       window.location.href = "/login";
     }
   };
@@ -40,28 +41,61 @@ export default function RegisterPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 6 }}>
-        <Typography variant="h4">Register</Typography>
+        <Typography variant="h4" sx={{ mb: 2 }}>
+          Register
+        </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-          <TextField fullWidth name="firstname" label="First Name" required sx={{ mb: 2 }} />
-          <TextField fullWidth name="lastname" label="Last Name" required sx={{ mb: 2 }} />
-          <TextField fullWidth name="email" label="Email" required sx={{ mb: 2 }} />
-          <TextField fullWidth name="password" type="password" label="Password" required sx={{ mb: 2 }} />
+        <Box component="form" onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            name="firstname"
+            label="First Name"
+            required
+            sx={{ mb: 2 }}
+          />
 
-          <Button type="submit" variant="contained" fullWidth>
+          <TextField
+            fullWidth
+            name="lastname"
+            label="Last Name"
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth
+            name="email"
+            label="Email"
+            type="email"
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 1 }}>
             Create Account
           </Button>
 
           <Button
             fullWidth
             variant="outlined"
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
             onClick={() => (window.location.href = "/login")}
           >
-            Login
+            Back to Login
           </Button>
 
-          <Typography sx={{ mt: 2 }}>{msg}</Typography>
+          {msg && (
+            <Typography sx={{ mt: 2, textAlign: "center" }}>{msg}</Typography>
+          )}
         </Box>
       </Box>
     </Container>

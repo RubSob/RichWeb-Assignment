@@ -1,42 +1,55 @@
 "use client";
 
-import * as React from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Container from "@mui/material/Container";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import { useState } from "react";
+import {
+  TextField,
+  Button,
+  Container,
+  Box,
+  Typography
+} from "@mui/material";
 
 export default function LoginPage() {
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const [errorMsg, setErrorMsg] = useState("");
 
-    const data = new FormData(event.currentTarget);
-    const email = data.get("email");
-    const password = data.get("pass"); // input is named "pass"
+  const handleSubmit = async (event) => {
+    event.preventDefault(); //stop page refresh
+
+    const form = new FormData(event.currentTarget);
+    const email = form.get("email");
+    const password = form.get("pass");
 
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }), // MUST MATCH API
+      body: JSON.stringify({ email, password })
     });
 
-    const result = await res.json();
-    console.log("Login API Response:", result);
+    const out = await res.json();
 
-    if (result.success) {
-      sessionStorage.setItem("email", result.email);
-      sessionStorage.setItem("role", result.account_type);
+    //checking login user
+    if (out.success) {
+      sessionStorage.setItem("email", out.email);
+      sessionStorage.setItem("role", out.role);
 
-      if (result.account_type === "manager") {
+      if (out.role === "manager") {
         window.location.href = "/manager";
       } else {
         window.location.href = "/customer";
       }
     } else {
-      alert("Invalid email or password.");
+      setErrorMsg("Invalid email or password.");
     }
   };
+
+  let errorBox = null;
+  if (errorMsg !== "") {
+    errorBox = (
+      <Typography sx={{ mt: 2, color: "red", textAlign: "center" }}>
+        {errorMsg}
+      </Typography>
+    );
+  }
 
   return (
     <Container maxWidth="sm">
@@ -45,36 +58,48 @@ export default function LoginPage() {
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: "center"
         }}
       >
-        <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ mb: 3 }}>
           LOG IN
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-          <TextField fullWidth label="Email" name="email" required />
-          <TextField
+        {/* Login Form */}
+        <Box component="form" onSubmit={handleSubmit}>
+         
+          <TextField   //email
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <TextField  //password
             fullWidth
             label="Password"
             name="pass"
             type="password"
             required
-            sx={{ mt: 2 }}
+            sx={{ mb: 2 }}
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+          <Button type="submit" variant="contained" fullWidth>
             Sign In
           </Button>
 
           <Button
             fullWidth
             variant="outlined"
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
             onClick={() => (window.location.href = "/newregister")}
           >
             Register
           </Button>
+
+          {errorBox}
         </Box>
       </Box>
     </Container>

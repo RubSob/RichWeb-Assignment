@@ -7,17 +7,30 @@ export async function POST(req) {
   try {
     const { email } = await req.json();
 
+    if (!email) {
+      return NextResponse.json(
+        { success: false, message: "Email is required" },
+        { status: 400 }
+      );
+    }
+
     const client = new MongoClient(uri);
     await client.connect();
     const db = client.db("app");
-    const cart = db.collection("shopping_cart");
 
+    //getting cart items
+    const cart = db.collection("shopping_cart");
     const items = await cart.find({ email }).toArray();
 
-    return NextResponse.json({ success: true, items });
+    return NextResponse.json({
+      success: true,
+      items,
+    });
 
-  } catch (err) {
-    console.log("GET CART ERROR:", err);
-    return NextResponse.json({ success: false });
+  } catch (error) {
+    console.error("GET CART ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Server error" }
+    );
   }
 }

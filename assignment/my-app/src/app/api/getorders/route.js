@@ -7,19 +7,22 @@ export async function GET() {
   try {
     const client = new MongoClient(uri);
     await client.connect();
-
     const db = client.db("app");
-    const collection = db.collection("products");
 
-    const products = await collection.find({}).toArray();
+    const ordersCollection = db.collection("orders");
+
+    //getting all orders, newest first
+    const orders = await ordersCollection.find().sort({ date: -1 }).toArray();
 
     return NextResponse.json({
       success: true,
-      products
+      orders,
     });
 
-  } catch (err) {
-    console.error("PRODUCT API ERROR:", err);
-    return NextResponse.json({ success: false }, { status: 500 });
+  } catch (error) {
+    console.error("GET ORDERS ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: "Server error" }
+    );
   }
 }
