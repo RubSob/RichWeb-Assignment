@@ -4,57 +4,68 @@ import { useEffect, useState } from "react";
 import { AppBar, Toolbar, Button, Typography } from "@mui/material";
 
 export default function Navbar() {
-  const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);
   const [cartCount, setCartCount] = useState(0);
 
-  // Tell React we are on the client
+  // Mark component as client-ready
   useEffect(() => {
-    setMounted(true);
+    setReady(true);
   }, []);
 
-  // Load cart count after mount
   useEffect(() => {
-    if (!mounted) return;
+    if (!ready) return;
 
-    const loadCart = async () => {
+    function loadCart() {
       const email = sessionStorage.getItem("email");
-      if (!email) return;
+      if (email === null) return;
 
-      const res = await fetch("/api/getCart", {
+      fetch("/api/getCart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+        body: JSON.stringify({ email })
+      })
+        .then((res) => res.json())
+        .then((out) => {
+          if (out.success) {
+            setCartCount(out.items.length);
+          }
+        });
+    }
 
-      const out = await res.json();
-      if (out.success) setCartCount(out.items.length);
-    };
-
-    loadCart(); // ← IMPORTANT: load once on mount
+    loadCart();
 
     window.addEventListener("cartUpdated", loadCart);
+
     return () => window.removeEventListener("cartUpdated", loadCart);
+  }, [ready]);
 
-  }, [mounted]);
+  if (!ready) {
+    return <div style={{ height: 64 }} />;
+  }
 
-  // Prevent hydration mismatch
-  if (!mounted) return <div style={{ height: 64 }} />;
-
-  const goHome = () => {
+  function goHome() {
     const role = sessionStorage.getItem("role");
-    window.location.href = role === "manager" ? "/manager" : "/customer";
-  };
+    if (role === "manager") {
+      window.location.href = "/manager";
+    } else {
+      window.location.href = "/customer";
+    }
+  }
 
-  const logout = () => {
+  function logout() {
     sessionStorage.clear();
     window.location.href = "/login";
-  };
+  }
 
   return (
-    <AppBar position="sticky" sx={{ backgroundColor: "#d32f2f" }}>
+    <AppBar position="sticky" sx={{ backgroundColor: "grey" }}>
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
 
-        <Typography variant="h6" sx={{ cursor: "pointer" }} onClick={goHome}>
+        <Typography
+          variant="h6"
+          sx={{ cursor: "pointer" }}
+          onClick={goHome}
+        >
           McDonald's App
         </Typography>
 

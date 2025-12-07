@@ -16,7 +16,7 @@ export default function CustomerPage() {
   const [products, setProducts] = useState([]);
   const [weather, setWeather] = useState(null);
 
-  // Session guard
+  //session
   useEffect(() => {
     const role = sessionStorage.getItem("role");
 
@@ -27,7 +27,7 @@ export default function CustomerPage() {
     }
   }, []);
 
-  // Load products + weather
+  //products
   useEffect(() => {
     const loadProducts = async () => {
   const res = await fetch("/api/products");
@@ -38,20 +38,20 @@ export default function CustomerPage() {
   } else {
     setProducts([]);              
   }
-};
+  };
 
 
     const loadWeather = async () => {
       const res = await fetch("/api/weather");
       const data = await res.json();
-      setWeather(data); // API returns { temp, desc }
+      setWeather(data); 
     };
 
     loadProducts();
     loadWeather();
   }, []);
 
-  // Add item to cart
+  //add to cart
   const addToCart = async (item) => {
     const email = sessionStorage.getItem("email");
 
@@ -61,7 +61,6 @@ export default function CustomerPage() {
       body: JSON.stringify({ email, pname: item.title }),
     });
 
-    // Tell Navbar to update count
     window.dispatchEvent(new Event("cartUpdated"));
   };
 
@@ -79,11 +78,11 @@ export default function CustomerPage() {
         <Grid container spacing={3}>
           {products.map((item) => (
             <Grid item xs={12} sm={6} md={4} key={item._id}>
-              <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
+              <Card sx={{}}>
                 <Box
                   sx={{
                     height: 180,
-                    backgroundColor: "#f5f5f5",
+                    backgroundColor: "white",
                     overflow: "hidden",
                     display: "flex",
                     justifyContent: "center",

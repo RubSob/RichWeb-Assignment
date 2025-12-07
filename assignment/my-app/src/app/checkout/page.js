@@ -76,8 +76,7 @@ export default function CheckoutPage() {
     const data = await res.json();
 
     if (data.success) {
-      alert("Order placed successfully!");
-      window.location.href = "/customer";
+      window.location.href = "/orderConfirm";
     }
   };
 
